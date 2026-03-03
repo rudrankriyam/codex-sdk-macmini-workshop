@@ -1,0 +1,32 @@
+{
+  "name": "codex-sdk-macmini-workshop",
+  "version": "1.0.0",
+  "description": "Starter project for building an always-on AI co-worker with the Codex SDK on Mac Mini.",
+  "private": true,
+  "main": "scripts/01-basic-worker.ts",
+  "scripts": {
+    "demo:basic": "tsx scripts/01-basic-worker.ts",
+    "demo:structured": "tsx scripts/02-structured-worker.ts",
+    "demo:persistent": "tsx scripts/03-persistent-worker.ts",
+    "worker:daemon": "tsx scripts/04-daemon-worker.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "codex-sdk",
+    "ai-coworker",
+    "mac-mini",
+    "workshop"
+  ],
+  "author": "Rudrank Riyam",
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "@openai/codex-sdk": "^0.107.0",
+    "dotenv": "^17.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.3",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}

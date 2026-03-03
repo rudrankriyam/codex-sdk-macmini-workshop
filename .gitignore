@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.env
+*.log
+state/thread-id.txt
+state/*.tmp
+logs/*.log
+logs/*.out
+logs/*.err
