@@ -5,7 +5,7 @@ import { access } from "node:fs/promises";
 import path from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 
-import { Codex, type ThreadOptions } from "@openai/codex-sdk";
+import { Codex, type ApprovalMode, type SandboxMode, type ThreadOptions } from "@openai/codex-sdk";
 
 const REPO_ROOT = process.cwd();
 
@@ -23,12 +23,33 @@ export function createCodexClient(): Codex {
   });
 }
 
+function resolveSandboxMode(): SandboxMode {
+  const raw = process.env.CODEX_SANDBOX_MODE;
+  if (raw === "read-only" || raw === "workspace-write" || raw === "danger-full-access") {
+    return raw;
+  }
+  return "read-only";
+}
+
+function resolveApprovalPolicy(): ApprovalMode {
+  const raw = process.env.CODEX_APPROVAL_POLICY;
+  if (raw === "never" || raw === "on-request" || raw === "on-failure" || raw === "untrusted") {
+    return raw;
+  }
+  return "never";
+}
+
+function resolveNetworkAccessEnabled(): boolean {
+  return process.env.CODEX_NETWORK_ACCESS_ENABLED === "true";
+}
+
 export function defaultThreadOptions(overrides: Partial<ThreadOptions> = {}): ThreadOptions {
   return {
     workingDirectory: REPO_ROOT,
     skipGitRepoCheck: process.env.SKIP_GIT_REPO_CHECK === "true",
-    sandboxMode: "workspace-write",
-    approvalPolicy: "on-request",
+    sandboxMode: resolveSandboxMode(),
+    approvalPolicy: resolveApprovalPolicy(),
+    networkAccessEnabled: resolveNetworkAccessEnabled(),
     ...overrides,
   };
 }

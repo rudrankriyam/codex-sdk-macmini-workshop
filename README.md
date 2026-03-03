@@ -32,6 +32,12 @@ cp .env.example .env
 
 All scripts automatically load `.env` via `dotenv`.
 
+Recommended workshop-safe defaults:
+
+- `CODEX_SANDBOX_MODE=read-only`
+- `CODEX_APPROVAL_POLICY=never`
+- `CODEX_NETWORK_ACCESS_ENABLED=false`
+
 ## Run demos
 
 ```bash
@@ -46,6 +52,20 @@ You can override prompts inline:
 npm run demo:basic -- "Analyze this repo and propose a 3-step reliability plan."
 npm run demo:structured -- "Return status and top actions for engineering backlog triage."
 npm run demo:persistent -- "Continue from the previous plan and execute step 1."
+```
+
+## Workshop preflight
+
+Run this before a live session:
+
+```bash
+npm run workshop:check
+```
+
+For a full smoke pass that also exercises all demos:
+
+```bash
+npm run workshop:check:demos
 ```
 
 ## Run always-on daemon worker

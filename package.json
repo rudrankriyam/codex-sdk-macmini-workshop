@@ -9,7 +9,9 @@
     "demo:structured": "tsx scripts/02-structured-worker.ts",
     "demo:persistent": "tsx scripts/03-persistent-worker.ts",
     "worker:daemon": "tsx scripts/04-daemon-worker.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "workshop:check": "bash scripts/workshop-check.sh",
+    "workshop:check:demos": "bash scripts/workshop-check.sh --with-demos"
   },
   "keywords": [
     "codex-sdk",
