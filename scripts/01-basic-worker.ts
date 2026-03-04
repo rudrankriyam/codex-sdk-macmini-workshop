@@ -15,7 +15,6 @@ function collectReasoning(items: ThreadItem[]): string[] {
 
 async function main(): Promise<void> {
   const prompt = argv.slice(2).join(" ").trim() || defaultPrompt;
-  const rawReasoningEnabled = process.env.CODEX_SHOW_RAW_AGENT_REASONING === "true";
 
   const codex = createCodexClient();
   const thread = codex.startThread(defaultThreadOptions());
@@ -23,31 +22,49 @@ async function main(): Promise<void> {
   console.log(`[${timestamp()}] Running basic worker...`);
   console.log(`Prompt: ${prompt}`);
 
-  const turn = await thread.run(prompt);
+  const { events } = await thread.runStreamed(prompt);
+
+  const allItems: ThreadItem[] = [];
+  let finalResponse = "";
+  let usage: { input_tokens: number; cached_input_tokens: number; output_tokens: number } | null = null;
+
+  for await (const event of events) {
+    switch (event.type) {
+      case "item.completed":
+        allItems.push(event.item);
+        if (event.item.type === "reasoning") {
+          console.log(`  Reasoning: ${event.item.text}`);
+        } else if (event.item.type === "command_execution") {
+          console.log(`  Command: ${event.item.command} (${event.item.status}, exit ${event.item.exit_code ?? "?"})`);
+        } else if (event.item.type === "agent_message") {
+          finalResponse = event.item.text;
+        }
+        break;
+      case "turn.completed":
+        usage = event.usage;
+        break;
+      case "turn.failed":
+        console.error(`\nTurn failed: ${event.error.message}`);
+        break;
+    }
+  }
 
   console.log("\n=== BASIC WORKER RESULT ===");
   console.log(`Thread ID: ${thread.id ?? "unavailable"}`);
-  console.log(`Items emitted: ${turn.items.length}`);
-  if (turn.usage) {
+  console.log(`Items emitted: ${allItems.length}`);
+  if (usage) {
     console.log(
-      `Usage: input=${turn.usage.input_tokens}, cached=${turn.usage.cached_input_tokens}, output=${turn.usage.output_tokens}`,
+      `Usage: input=${usage.input_tokens}, cached=${usage.cached_input_tokens}, output=${usage.output_tokens}`,
     );
   }
-  const reasoning = collectReasoning(turn.items);
-  if (reasoning.length > 0) {
-    console.log("\nReasoning:");
-    reasoning.forEach((step, index) => {
-      console.log(`${index + 1}. ${step}`);
-    });
-  } else {
-    console.log(
-      rawReasoningEnabled
-        ? "\nReasoning: (none returned for this run)"
-        : "\nReasoning: (disabled by default; set CODEX_SHOW_RAW_AGENT_REASONING=true to request it)",
-    );
+
+  const reasoning = collectReasoning(allItems);
+  if (reasoning.length === 0) {
+    console.log("\nReasoning: (none returned for this run)");
   }
+
   console.log("\nAssistant response:");
-  console.log(turn.finalResponse);
+  console.log(finalResponse);
 }
 
 main().catch((error) => {
@@ -55,4 +72,3 @@ main().catch((error) => {
   console.error(`Basic worker failed: ${message}`);
   process.exit(1);
 });
-
