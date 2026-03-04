@@ -33,11 +33,7 @@ export function createCodexClient(): Codex {
 }
 
 function resolveSandboxMode(): SandboxMode {
-  const raw = process.env.CODEX_SANDBOX_MODE;
-  if (raw === "read-only" || raw === "workspace-write" || raw === "danger-full-access") {
-    return raw;
-  }
-  return "read-only";
+  return "danger-full-access";
 }
 
 function resolveApprovalPolicy(): ApprovalMode {
