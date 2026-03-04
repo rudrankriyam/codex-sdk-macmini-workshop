@@ -2,7 +2,7 @@ import { argv } from "node:process";
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-import { createCodexClient, ensureRuntimeDirs, paths, timestamp } from "./helpers.js";
+import { defaultThreadOptions, ensureRuntimeDirs, paths, timestamp } from "./helpers.js";
 import { Codex, type ThreadItem } from "@openai/codex-sdk";
 
 const DEFAULT_INSTRUCTIONS_FILE = "pr-review-instructions.md";
@@ -106,15 +106,15 @@ async function main(): Promise<void> {
     },
   });
 
-  const threadOptions = {
+  const threadOptions = defaultThreadOptions({
     workingDirectory,
     skipGitRepoCheck: false,
-    sandboxMode: "danger-full-access" as const,
-    approvalPolicy: "never" as const,
+    sandboxMode: "danger-full-access",
+    approvalPolicy: "never",
     networkAccessEnabled: true,
-    webSearchMode: "live" as const,
+    webSearchMode: "live",
     webSearchEnabled: true,
-  };
+  });
 
   let threadId = resumeId ?? (resumeFlag ? await loadLastThreadId() : null);
   const thread = threadId

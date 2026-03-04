@@ -46,6 +46,8 @@ Recommended workshop-safe defaults:
 - `CODEX_SANDBOX_MODE=read-only`
 - `CODEX_APPROVAL_POLICY=never`
 - `CODEX_NETWORK_ACCESS_ENABLED=false`
+- `CODEX_MODEL=gpt-5.3-codex`
+- `CODEX_MODEL_REASONING_EFFORT=medium` (GPT-5.3 Codex Medium profile)
 
 ## Run demos
 

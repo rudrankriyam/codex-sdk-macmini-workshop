@@ -5,9 +5,17 @@ import { access } from "node:fs/promises";
 import path from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 
-import { Codex, type ApprovalMode, type SandboxMode, type ThreadOptions } from "@openai/codex-sdk";
+import {
+  Codex,
+  type ApprovalMode,
+  type ModelReasoningEffort,
+  type SandboxMode,
+  type ThreadOptions,
+} from "@openai/codex-sdk";
 
 const REPO_ROOT = process.cwd();
+const DEFAULT_CODEX_MODEL = "gpt-5.3-codex";
+const DEFAULT_CODEX_MODEL_REASONING_EFFORT: ModelReasoningEffort = "medium";
 
 export const paths = {
   stateDir: path.join(REPO_ROOT, "state"),
@@ -49,8 +57,23 @@ function resolveNetworkAccessEnabled(): boolean {
   return process.env.CODEX_NETWORK_ACCESS_ENABLED === "true";
 }
 
+function resolveModel(): string {
+  const envModel = process.env.CODEX_MODEL?.trim();
+  return envModel && envModel.length > 0 ? envModel : DEFAULT_CODEX_MODEL;
+}
+
+function resolveModelReasoningEffort(): ModelReasoningEffort {
+  const envEffort = process.env.CODEX_MODEL_REASONING_EFFORT;
+  if (envEffort === "minimal" || envEffort === "low" || envEffort === "medium" || envEffort === "high" || envEffort === "xhigh") {
+    return envEffort;
+  }
+  return DEFAULT_CODEX_MODEL_REASONING_EFFORT;
+}
+
 export function defaultThreadOptions(overrides: Partial<ThreadOptions> = {}): ThreadOptions {
   return {
+    model: resolveModel(),
+    modelReasoningEffort: resolveModelReasoningEffort(),
     workingDirectory: REPO_ROOT,
     skipGitRepoCheck: process.env.SKIP_GIT_REPO_CHECK === "true",
     sandboxMode: resolveSandboxMode(),
