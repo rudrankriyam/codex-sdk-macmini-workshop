@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Codex Workshop Demo Deck</title>
+  <style>
+    :root {
+      --bg-0: #050814;
+      --bg-1: #0c1430;
+      --bg-2: #12244c;
+      --ink: #edf3ff;
+      --muted: #a9b8de;
+      --card: rgba(8, 15, 36, 0.78);
+      --card-border: rgba(147, 176, 240, 0.25);
+      --panel: rgba(9, 18, 42, 0.76);
+      --shadow: 0 24px 64px rgba(0, 0, 0, 0.45);
+      --mono: Menlo, Consolas, "Liberation Mono", monospace;
+      --sans: "Avenir Next", "Trebuchet MS", "Lucida Grande", sans-serif;
+      --head: "Gill Sans MT", "Avenir Next Condensed", "Trebuchet MS", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      height: 100%;
+    }
+
+    body {
+      margin: 0;
+      overflow: hidden;
+      color: var(--ink);
+      font-family: var(--sans);
+      background:
+        radial-gradient(circle at 12% 18%, rgba(84, 148, 255, 0.24), transparent 42%),
+        radial-gradient(circle at 88% 82%, rgba(255, 140, 59, 0.22), transparent 38%),
+        linear-gradient(145deg, var(--bg-0), var(--bg-1) 45%, var(--bg-2));
+    }
+
+    .stage {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1vh 1vw;
+    }
+
+    .deck {
+      width: min(98vw, calc(98vh * 16 / 9));
+      aspect-ratio: 16 / 9;
+      position: relative;
+      border-radius: 20px;
+      overflow: hidden;
+      border: 1px solid rgba(157, 190, 255, 0.2);
+      background:
+        linear-gradient(120deg, rgba(6, 11, 27, 0.86), rgba(8, 16, 39, 0.75)),
+        radial-gradient(circle at 80% 25%, rgba(93, 156, 255, 0.14), transparent 35%);
+      box-shadow: var(--shadow);
+    }
+
+    .deck::before,
+    .deck::after {
+      content: "";
+      position: absolute;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .deck::before {
+      inset: -20% -10% auto auto;
+      width: 54%;
+      height: 60%;
+      background: radial-gradient(circle, rgba(112, 210, 255, 0.22), transparent 68%);
+    }
+
+    .deck::after {
+      inset: auto auto -24% -14%;
+      width: 50%;
+      height: 58%;
+      background: radial-gradient(circle, rgba(255, 138, 77, 0.2), transparent 70%);
+    }
+
+    .counter {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      z-index: 10;
+      padding: 7px 12px;
+      border-radius: 999px;
+      font-family: var(--mono);
+      font-size: 0.84rem;
+      letter-spacing: 0.04em;
+      color: var(--ink);
+      background: rgba(9, 20, 48, 0.7);
+      border: 1px solid rgba(163, 193, 255, 0.25);
+    }
+
+    .slides {
+      position: absolute;
+      inset: 56px 18px 62px 18px;
+      z-index: 2;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 16px;
+      padding: 20px;
+      border-radius: 16px;
+      border: 1px solid var(--card-border);
+      background:
+        linear-gradient(145deg, rgba(12, 22, 52, 0.62), rgba(7, 13, 30, 0.7)),
+        radial-gradient(circle at 85% 15%, color-mix(in srgb, var(--accent) 24%, transparent), transparent 40%);
+      opacity: 0;
+      transform: translateX(20px) scale(0.985);
+      transition: opacity 220ms ease, transform 240ms ease;
+      pointer-events: none;
+    }
+
+    .slide.active {
+      opacity: 1;
+      transform: translateX(0) scale(1);
+      pointer-events: auto;
+    }
+
+    .topline {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .kicker {
+      margin: 0;
+      color: var(--accent);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.11em;
+      font-weight: 700;
+    }
+
+    h1 {
+      margin: 0;
+      font-family: var(--head);
+      font-weight: 700;
+      font-size: clamp(1.8rem, 3.25vw, 2.8rem);
+      letter-spacing: 0.02em;
+      line-height: 1;
+    }
+
+    .objective {
+      margin: 0;
+      color: var(--muted);
+      font-size: clamp(0.95rem, 1.22vw, 1.18rem);
+      line-height: 1.35;
+    }
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: 1.18fr 1fr;
+      gap: 14px;
+      min-height: 0;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid rgba(152, 181, 243, 0.2);
+      border-radius: 12px;
+      padding: 13px 14px;
+      min-height: 0;
+    }
+
+    .card h2 {
+      margin: 0 0 8px;
+      font-size: 0.92rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: color-mix(in srgb, var(--accent) 72%, white);
+      font-family: var(--head);
+      font-weight: 700;
+    }
+
+    pre {
+      margin: 0;
+      white-space: pre-wrap;
+      line-height: 1.34;
+      font-size: clamp(0.76rem, 1.03vw, 0.98rem);
+      color: #dce8ff;
+      font-family: var(--mono);
+    }
+
+    .points ul {
+      margin: 0;
+      padding-left: 18px;
+      display: grid;
+      gap: 7px;
+      color: #d6e4ff;
+      font-size: clamp(0.84rem, 1.06vw, 1rem);
+      line-height: 1.35;
+    }
+
+    .flow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 72px;
+      padding: 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(155, 186, 246, 0.23);
+      background: rgba(10, 22, 53, 0.65);
+      overflow: hidden;
+    }
+
+    .node {
+      min-width: 126px;
+      text-align: center;
+      padding: 10px 11px;
+      border-radius: 10px;
+      border: 1px solid color-mix(in srgb, var(--accent) 45%, #6f88b8);
+      background: linear-gradient(150deg, rgba(26, 40, 78, 0.82), rgba(9, 18, 42, 0.86));
+      font-size: clamp(0.72rem, 0.9vw, 0.9rem);
+      font-weight: 600;
+      line-height: 1.2;
+      color: #e7f0ff;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+    }
+
+    .arrow {
+      font-family: var(--mono);
+      color: color-mix(in srgb, var(--accent) 86%, #ffffff);
+      font-size: clamp(0.9rem, 1vw, 1.05rem);
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .note-bar {
+      position: absolute;
+      left: 18px;
+      right: 18px;
+      bottom: 14px;
+      z-index: 8;
+      min-height: 36px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(171, 200, 255, 0.22);
+      background: rgba(8, 15, 35, 0.74);
+      font-size: 0.86rem;
+      color: #d8e7ff;
+    }
+
+    .note-label {
+      color: #8bc9ff;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-size: 0.7rem;
+      flex-shrink: 0;
+    }
+
+    .hint {
+      position: absolute;
+      left: 16px;
+      top: 16px;
+      z-index: 6;
+      font-size: 0.69rem;
+      letter-spacing: 0.03em;
+      color: rgba(220, 232, 255, 0.55);
+      font-family: var(--mono);
+    }
+
+    @media (max-width: 1150px) {
+      .slide {
+        padding: 16px;
+      }
+
+      .content-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .flow {
+        justify-content: flex-start;
+        overflow-x: auto;
+      }
+
+      .node {
+        min-width: 112px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <div class="deck">
+      <div class="hint">Keys: Left/Right, PageUp/PageDown, Space, Home, End</div>
+      <div class="counter" id="counter">1/8</div>
+
+      <div class="slides" id="slides">
+        <section class="slide active" style="--accent: #67d9ff;" data-note="Risk: response is too verbose. Fallback: rerun with the same prompt and ask for exactly 2 bullets.">
+          <header class="topline">
+            <p class="kicker">Demo 1</p>
+            <h1>Basic Worker</h1>
+            <p class="objective">Objective: Show the smallest Codex SDK loop from prompt to answer.</p>
+          </header>
+          <div class="content-grid">
+            <article class="card commands">
+              <h2>Command(s)</h2>
+              <pre>npm run demo:basic -- "Summarize this repo's purpose in 2 bullets."</pre>
+            </article>
+            <article class="card points">
+              <h2>Talking Points</h2>
+              <ul>
+                <li><code>startThread()</code> creates isolated conversation state.</li>
+                <li><code>run()</code> executes the prompt and returns usage + output.</li>
+                <li>Capture the thread ID for later continuation demos.</li>
+              </ul>
+            </article>
+          </div>
+          <div class="flow" role="img" aria-label="Basic worker flow">
+            <div class="node">Prompt</div><div class="arrow">-&gt;</div>
+            <div class="node">startThread()</div><div class="arrow">-&gt;</div>
+            <div class="node">run()</div><div class="arrow">-&gt;</div>
+            <div class="node">Console Answer</div>
+          </div>
+        </section>
+
+        <section class="slide" style="--accent: #8de66f;" data-note="Risk: malformed JSON output. Fallback: tighten the schema and rerun the same prompt.">
+          <header class="topline">
+            <p class="kicker">Demo 2</p>
+            <h1>Structured Output</h1>
+            <p class="objective">Objective: Keep outputs machine-safe with an explicit JSON schema contract.</p>
+          </header>
+          <div class="content-grid">
+            <article class="card commands">
+              <h2>Command(s)</h2>
+              <pre>npm run demo:structured -- "Return status and top 3 actions for this project."</pre>
+            </article>
+            <article class="card points">
+              <h2>Talking Points</h2>
+              <ul>
+                <li><code>outputSchema</code> enforces predictable response shape.</li>
+                <li>Parsed JSON is safer than ad hoc text parsing.</li>
+                <li>Type-safe fields simplify downstream automation.</li>
+              </ul>
+            </article>
+          </div>
+          <div class="flow" role="img" aria-label="Structured flow">
+            <div class="node">Prompt</div><div class="arrow">-&gt;</div>
+            <div class="node">JSON Schema</div><div class="arrow">-&gt;</div>
+            <div class="node">Codex Run</div><div class="arrow">-&gt;</div>
+            <div class="node">Validated JSON</div>
+          </div>
+        </section>
+
+        <section class="slide" style="--accent: #ffbe64;" data-note="Risk: missing thread state file. Fallback: rerun the first persistent command before the continuation step.">
+          <header class="topline">
+            <p class="kicker">Demo 3</p>
+            <h1>Persistent Worker</h1>
+            <p class="objective">Objective: Prove context survives across separate process runs.</p>
+          </header>
+          <div class="content-grid">
+            <article class="card commands">
+              <h2>Command(s)</h2>
+              <pre>npm run demo:persistent -- "Create a 3-step improvement plan for this repo."
+npm run demo:persistent -- "Continue from prior context and execute step 1."</pre>
+            </article>
+            <article class="card points">
+              <h2>Talking Points</h2>
+              <ul>
+                <li><code>resumeThread()</code> restores prior thread memory.</li>
+                <li><code>state/thread-id.txt</code> decouples runtime and context state.</li>
+                <li>Useful for multi-step tasks across restarts and cron jobs.</li>
+              </ul>
+            </article>
+          </div>
+          <div class="flow" role="img" aria-label="Persistent flow">
+            <div class="node">Run 1 Plan</div><div class="arrow">-&gt;</div>
+            <div class="node">Save Thread ID</div><div class="arrow">-&gt;</div>
+            <div class="node">Run 2 Resume</div><div class="arrow">-&gt;</div>
+            <div class="node">Execute Step 1</div>
+          </div>
+        </section>
+
+        <section class="slide" style="--accent: #ff8a76;" data-note="Risk: file too large or missing. Fallback: switch to README.md and rerun live.">
+          <header class="topline">
+            <p class="kicker">Demo 4</p>
+            <h1>Summarize File</h1>
+            <p class="objective">Objective: Summarize local files quickly with a built-in size guard.</p>
+          </header>
+          <div class="content-grid">
+            <article class="card commands">
+              <h2>Command(s)</h2>
+              <pre>npm run demo:summarize -- README.md
+npm run demo:summarize -- ~/Developer/Apps/Foundation-Models-Framework-Example/README.md</pre>
+            </article>
+            <article class="card points">
+              <h2>Talking Points</h2>
+              <ul>
+                <li>Reads a local file and clips input near the 50 KB threshold.</li>
+                <li>Fast way to add context without manual copy/paste.</li>
+                <li>Missing-file errors are surfaced cleanly for quick recovery.</li>
+              </ul>
+            </article>
+          </div>
+          <div class="flow" role="img" aria-label="Summarize file flow">
+            <div class="node">File Path</div><div class="arrow">-&gt;</div>
+            <div class="node">Size Guard</div><div class="arrow">-&gt;</div>
+            <div class="node">Prompt Build</div><div class="arrow">-&gt;</div>
+            <div class="node">Summary</div>
+          </div>
+        </section>
+
+        <section class="slide" style="--accent: #5de2cb;" data-note="Risk: gh auth failure. Fallback: show streamed review text and post comment manually in browser.">
+          <header class="topline">
+            <p class="kicker">Demo 5</p>
+            <h1>PR Reviewer</h1>
+            <p class="objective">Objective: Stream a live code review and post a GitHub PR comment.</p>
+          </header>
+          <div class="content-grid">
+            <article class="card commands">
+              <h2>Command(s)</h2>
+              <pre>npm run demo:pr-review -- 1</pre>
+            </article>
+            <article class="card points">
+              <h2>Talking Points</h2>
+              <ul>
+                <li><code>runStreamed()</code> exposes reasoning progress event-by-event.</li>
+                <li><code>gh</code> integration publishes a review comment directly to the PR.</li>
+                <li><code>networkAccessEnabled</code> is required for remote API calls.</li>
+              </ul>
+            </article>
+          </div>
+          <div class="flow" role="img" aria-label="PR review flow">
+            <div class="node">PR ID</div><div class="arrow">-&gt;</div>
+            <div class="node">Stream Analysis</div><div class="arrow">-&gt;</div>
+            <div class="node">Review Draft</div><div class="arrow">-&gt;</div>
+            <div class="node">Post via gh</div>
+          </div>
+        </section>
+
+        <section class="slide" style="--accent: #9cb4ff;" data-note="Risk: timer cycle is slow. Fallback: show existing log tail to explain loop behavior.">
+          <header class="topline">
+            <p class="kicker">Demo 6</p>
+            <h1>Daemon Worker</h1>
+            <p class="objective">Objective: Demonstrate always-on background execution on a timer loop.</p>
+          </header>
+          <div class="content-grid">
+            <article class="card commands">
+              <h2>Command(s)</h2>
+              <pre>npm run worker:daemon
+# Watch one cycle complete, then Ctrl+C
+# Show the log
+tail -20 logs/worker.log</pre>
+            </article>
+            <article class="card points">
+              <h2>Talking Points</h2>
+              <ul>
+                <li>Periodic loop enables unattended check-ins and actions.</li>
+                <li><code>launchd</code> and <code>systemd</code> templates support service mode.</li>
+                <li><code>logs/worker.log</code> is the primary audit and troubleshooting trail.</li>
+              </ul>
+            </article>
+          </div>
+          <div class="flow" role="img" aria-label="Daemon flow">
+            <div class="node">Timer Tick</div><div class="arrow">-&gt;</div>
+            <div class="node">Load Thread</div><div class="arrow">-&gt;</div>
+            <div class="node">Run Task</div><div class="arrow">-&gt;</div>
+            <div class="node">Append Log</div>
+          </div>
+        </section>
+
+        <section class="slide" style="--accent: #e9d06d;" data-note="Risk: Slack tokens or scopes are wrong. Fallback: use saved logs and a pre-seeded bot reply screenshot.">
+          <header class="topline">
+            <p class="kicker">Demo 7</p>
+            <h1>Slack Bot</h1>
+            <p class="objective">Objective: Show real-time @mention handling with a Socket Mode worker.</p>
+          </header>
+          <div class="content-grid">
+            <article class="card commands">
+              <h2>Command(s)</h2>
+              <pre>npm run worker:slack</pre>
+            </article>
+            <article class="card points">
+              <h2>Talking Points</h2>
+              <ul>
+                <li>Socket Mode avoids public inbound webhook setup.</li>
+                <li>Bolt.js routes @mentions and DMs into Codex runs.</li>
+                <li>Threaded Slack replies keep discussion context organized.</li>
+              </ul>
+            </article>
+          </div>
+          <div class="flow" role="img" aria-label="Slack bot flow">
+            <div class="node">Slack Mention</div><div class="arrow">-&gt;</div>
+            <div class="node">Event Handler</div><div class="arrow">-&gt;</div>
+            <div class="node">Codex Run</div><div class="arrow">-&gt;</div>
+            <div class="node">Thread Reply</div>
+          </div>
+        </section>
+
+        <section class="slide" style="--accent: #ff9ccb;" data-note="Risk: Simulator lag or GUI hiccup. Fallback: use a short local recording and continue narration.">
+          <header class="topline">
+            <p class="kicker">Demo 8</p>
+            <h1>Foundation Lab + Xcode/Simulator</h1>
+            <p class="objective">Objective: Present end-to-end Apple stack flow from build to on-device intelligence.</p>
+          </header>
+          <div class="content-grid">
+            <article class="card commands">
+              <h2>Command(s)</h2>
+              <pre># Switch to Screen Sharing window (vnc://mac-mini). Show:
+# 1. Xcode building the Foundation Lab project
+# 2. Simulator launching
+# 3. The app running on-device intelligence</pre>
+            </article>
+            <article class="card points">
+              <h2>Talking Points</h2>
+              <ul>
+                <li>Bridge terminal-first automation to native app runtime behavior.</li>
+                <li>Highlight on-device Foundation Models and Apple Intelligence value.</li>
+                <li>Use XcodeBuildMCP as fallback trigger when manual clicks slow down.</li>
+              </ul>
+            </article>
+          </div>
+          <div class="flow" role="img" aria-label="Xcode and simulator flow">
+            <div class="node">Screen Sharing</div><div class="arrow">-&gt;</div>
+            <div class="node">Xcode Build</div><div class="arrow">-&gt;</div>
+            <div class="node">iOS Simulator</div><div class="arrow">-&gt;</div>
+            <div class="node">Foundation Lab Live</div>
+          </div>
+        </section>
+      </div>
+
+      <div class="note-bar">
+        <span class="note-label">Presenter Cue</span>
+        <span id="note-text"></span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const slides = Array.from(document.querySelectorAll(".slide"));
+      const counter = document.getElementById("counter");
+      const noteText = document.getElementById("note-text");
+      let current = 0;
+
+      function clamp(index) {
+        return Math.max(0, Math.min(slides.length - 1, index));
+      }
+
+      function render(index) {
+        current = clamp(index);
+        slides.forEach((slide, idx) => {
+          slide.classList.toggle("active", idx === current);
+        });
+        counter.textContent = (current + 1) + "/" + slides.length;
+        noteText.textContent = slides[current].dataset.note || "";
+      }
+
+      function next() {
+        render(current + 1);
+      }
+
+      function previous() {
+        render(current - 1);
+      }
+
+      window.addEventListener("keydown", (event) => {
+        const key = event.key;
+
+        if (key === "ArrowRight" || key === "PageDown" || key === " " || key === "Spacebar") {
+          event.preventDefault();
+          next();
+          return;
+        }
+
+        if (key === "ArrowLeft" || key === "PageUp") {
+          event.preventDefault();
+          previous();
+          return;
+        }
+
+        if (key === "Home") {
+          event.preventDefault();
+          render(0);
+          return;
+        }
+
+        if (key === "End") {
+          event.preventDefault();
+          render(slides.length - 1);
+        }
+      });
+
+      render(0);
+    })();
+  </script>
+</body>
+</html>
