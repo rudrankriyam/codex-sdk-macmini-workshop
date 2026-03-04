@@ -6,6 +6,7 @@ import {
   parseStructuredJson,
   timestamp,
 } from "./helpers.js";
+import type { ReasoningItem, ThreadItem } from "@openai/codex-sdk";
 
 type StructuredWorkerResponse = {
   summary: string;
@@ -31,8 +32,16 @@ const responseSchema = {
 const defaultPrompt =
   "Summarize repository health and return concrete next engineering steps in structured JSON.";
 
+function collectReasoning(items: ThreadItem[]): string[] {
+  return items
+    .filter((item): item is ReasoningItem => item.type === "reasoning")
+    .map((item) => item.text.trim())
+    .filter((text) => text.length > 0);
+}
+
 async function main(): Promise<void> {
   const prompt = argv.slice(2).join(" ").trim() || defaultPrompt;
+  const rawReasoningEnabled = process.env.CODEX_SHOW_RAW_AGENT_REASONING === "true";
 
   const codex = createCodexClient();
   const thread = codex.startThread(defaultThreadOptions());
@@ -62,6 +71,19 @@ async function main(): Promise<void> {
   parsed.actions.forEach((action, index) => {
     console.log(`${index + 1}. ${action}`);
   });
+  const reasoning = collectReasoning(turn.items);
+  if (reasoning.length > 0) {
+    console.log("\nReasoning:");
+    reasoning.forEach((step, index) => {
+      console.log(`${index + 1}. ${step}`);
+    });
+  } else {
+    console.log(
+      rawReasoningEnabled
+        ? "\nReasoning: (none returned for this run)"
+        : "\nReasoning: (disabled by default; set CODEX_SHOW_RAW_AGENT_REASONING=true to request it)",
+    );
+  }
 }
 
 main().catch((error) => {

@@ -16,10 +16,16 @@ export const paths = {
   workerLogFile: path.join(REPO_ROOT, "logs", "worker.log"),
 } as const;
 
+function resolveShowRawAgentReasoning(): boolean {
+  return process.env.CODEX_SHOW_RAW_AGENT_REASONING === "true";
+}
+
 export function createCodexClient(): Codex {
+  const showRawAgentReasoning = resolveShowRawAgentReasoning();
   return new Codex({
     apiKey: process.env.CODEX_API_KEY,
     baseUrl: process.env.OPENAI_BASE_URL,
+    config: showRawAgentReasoning ? { show_raw_agent_reasoning: true } : undefined,
   });
 }
 

@@ -8,6 +8,7 @@
     "demo:basic": "tsx scripts/01-basic-worker.ts",
     "demo:structured": "tsx scripts/02-structured-worker.ts",
     "demo:persistent": "tsx scripts/03-persistent-worker.ts",
+    "demo:web-access": "tsx scripts/07-web-access-worker.ts",
     "worker:daemon": "tsx scripts/04-daemon-worker.ts",
     "demo:pr-review": "tsx scripts/05-pr-reviewer.ts",
     "worker:slack": "tsx scripts/06-slack-coworker.ts",

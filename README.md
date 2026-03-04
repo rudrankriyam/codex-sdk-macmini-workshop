@@ -9,6 +9,7 @@ Build an always-on AI engineering co-worker with the Codex SDK. Runs on a Mac Mi
 | `01-basic-worker.ts` | Minimal `startThread()` + `run()` demo |
 | `02-structured-worker.ts` | JSON-schema constrained output |
 | `03-persistent-worker.ts` | Save and resume `threadId` across runs |
+| `07-web-access-worker.ts` | Live web-search-enabled run with streamed events |
 | `04-daemon-worker.ts` | Always-on loop for headless service mode |
 | `05-pr-reviewer.ts` | Streaming PR review — posts a comment via `gh` |
 | `06-slack-coworker.ts` | Slack bot (Socket Mode) — @mention to run Codex |
@@ -51,6 +52,7 @@ Recommended workshop-safe defaults:
 npm run demo:basic
 npm run demo:structured
 npm run demo:persistent
+npm run demo:web-access
 npm run demo:summarize -- README.md
 ```
 
@@ -69,6 +71,15 @@ Reviews a pull request and posts a comment via `gh`:
 ```bash
 npm run demo:pr-review -- 42                                  # default repo
 npm run demo:pr-review -- rudrankriyam/some-other-repo 7      # override repo
+```
+
+### Web access demo
+
+Runs with thread-level overrides (`networkAccessEnabled=true`, `webSearchMode=live`) and prints streamed `web_search` items so you can show live web capability during the workshop:
+
+```bash
+npm run demo:web-access
+npm run demo:web-access -- "Find the latest Xcode release notes and summarize the top 3 changes with source links."
 ```
 
 ### Slack coworker

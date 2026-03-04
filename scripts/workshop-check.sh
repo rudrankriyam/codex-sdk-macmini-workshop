@@ -74,6 +74,11 @@ if [[ "$WITH_DEMOS" == "true" ]]; then
   npm run demo:structured -- "Return structured JSON with summary, status, and actions for workshop readiness." | tee "logs/workshop-check-structured.log"
   npm run demo:persistent -- "Create a short prep plan for this workshop repository." | tee "logs/workshop-check-persistent-1.log"
   npm run demo:persistent -- "Resume previous context and provide the next concrete action." | tee "logs/workshop-check-persistent-2.log"
+  if npm run demo:web-access -- "Use live web access to find the latest stable Node.js LTS and provide 2 bullets with links." | tee "logs/workshop-check-web-access.log"; then
+    log "web access demo: PASS"
+  else
+    warn "web access demo failed (network may be blocked). Continuing."
+  fi
 fi
 
 log "preflight: PASS"
