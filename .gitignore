@@ -7,3 +7,4 @@ state/*.tmp
 logs/*.log
 logs/*.out
 logs/*.err
+WORKSHOP-SCRIPT.md
