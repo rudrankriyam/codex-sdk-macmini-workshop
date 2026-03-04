@@ -1,0 +1,19 @@
+[Unit]
+Description=Codex SDK daemon worker — always-on AI engineering co-worker
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=__USER__
+WorkingDirectory=__REPO_ROOT__
+ExecStart=/usr/bin/env npm run worker:daemon
+Restart=on-failure
+RestartSec=30
+EnvironmentFile=__REPO_ROOT__/.env
+
+StandardOutput=append:__REPO_ROOT__/logs/systemd.out.log
+StandardError=append:__REPO_ROOT__/logs/systemd.err.log
+
+[Install]
+WantedBy=multi-user.target

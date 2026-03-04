@@ -1,6 +1,6 @@
-# Codex SDK Mac Mini Workshop
+# Codex SDK Workshop
 
-Build an always-on AI engineering co-worker with the Codex SDK, running on a Mac Mini headless server. Demo from your MacBook Pro via Tailscale.
+Build an always-on AI engineering co-worker with the Codex SDK. Runs on a Mac Mini, a Linux VPS, or any machine with Node.js. Demo from your laptop via SSH + Tailscale.
 
 ## What is included
 
@@ -9,11 +9,12 @@ Build an always-on AI engineering co-worker with the Codex SDK, running on a Mac
 | `01-basic-worker.ts` | Minimal `startThread()` + `run()` demo |
 | `02-structured-worker.ts` | JSON-schema constrained output |
 | `03-persistent-worker.ts` | Save and resume `threadId` across runs |
-| `04-daemon-worker.ts` | Always-on loop for Mac Mini service mode |
+| `04-daemon-worker.ts` | Always-on loop for headless service mode |
 | `05-pr-reviewer.ts` | Streaming PR review — posts a comment via `gh` |
 | `06-slack-coworker.ts` | Slack bot (Socket Mode) — @mention to run Codex |
 | `summarize-file.ts` | Summarize any file with size-guarded prompt |
-| `launchd/` | Template plist for `launchd` daemon setup |
+| `launchd/` | macOS `launchd` plist template |
+| `systemd/` | Linux `systemd` unit file template |
 
 All scripts target the [Foundation Models Framework Example](https://github.com/rudrankriyam/Foundation-Models-Framework-Example) repo as the default workspace for demos.
 
@@ -31,8 +32,6 @@ npm install
 ```
 
 ## Environment
-
-Copy the sample file and adjust values:
 
 ```bash
 cp .env.example .env
@@ -68,11 +67,8 @@ npm run demo:persistent -- "Continue from the previous plan and execute step 1."
 Reviews a pull request and posts a comment via `gh`:
 
 ```bash
-# Uses default repo (Foundation-Models-Framework-Example)
-npm run demo:pr-review -- 42
-
-# Override repo
-npm run demo:pr-review -- rudrankriyam/some-other-repo 7
+npm run demo:pr-review -- 42                                  # default repo
+npm run demo:pr-review -- rudrankriyam/some-other-repo 7      # override repo
 ```
 
 ### Slack coworker
@@ -83,12 +79,12 @@ A Socket Mode bot that responds to @mentions and DMs:
 npm run worker:slack
 ```
 
-See the [Slack App setup](#slack-app-setup) section below for configuration.
+See [Slack App setup](#slack-app-setup) below for configuration.
 
 ## Workshop preflight
 
 ```bash
-npm run workshop:check          # quick env + typecheck
+npm run workshop:check          # env + typecheck + optional tool checks
 npm run workshop:check:demos    # also exercises all demo scripts
 ```
 
@@ -100,20 +96,67 @@ npm run worker:daemon
 
 Runtime files: `state/thread-id.txt`, `logs/worker.log`
 
-## launchd setup (Mac Mini)
+---
 
-1. Open `launchd/com.rudrank.codex-worker.plist`
-2. Replace all `__REPO_ROOT__` placeholders with your absolute project path
-3. Copy and load:
+## Deploying as a service
+
+Pick whichever matches your server.
+
+### Option A: macOS (Mac Mini) — launchd
+
+1. Edit `launchd/com.rudrank.codex-worker.plist` — replace every `__REPO_ROOT__` with your absolute project path
+2. Copy and load:
 
 ```bash
 cp launchd/com.rudrank.codex-worker.plist ~/Library/LaunchAgents/
 launchctl load ~/Library/LaunchAgents/com.rudrank.codex-worker.plist
-launchctl list | rg codex-worker
+launchctl list | grep codex-worker
 ```
 
-4. Check logs: `tail -f logs/worker.log`
-5. Unload: `launchctl unload ~/Library/LaunchAgents/com.rudrank.codex-worker.plist`
+3. Check logs: `tail -f logs/launchd.out.log`
+4. Unload: `launchctl unload ~/Library/LaunchAgents/com.rudrank.codex-worker.plist`
+
+### Option B: Linux VPS — systemd
+
+1. Edit `systemd/codex-worker.service` — replace `__REPO_ROOT__` and `__USER__`:
+
+```bash
+sed -i "s|__REPO_ROOT__|$(pwd)|g; s|__USER__|$(whoami)|g" systemd/codex-worker.service
+```
+
+2. Install and start:
+
+```bash
+sudo cp systemd/codex-worker.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now codex-worker
+```
+
+3. Check status and logs:
+
+```bash
+sudo systemctl status codex-worker
+journalctl -u codex-worker -f
+tail -f logs/systemd.out.log
+```
+
+4. Stop: `sudo systemctl stop codex-worker`
+
+### Option C: Any machine — tmux (simplest)
+
+Works on macOS, Linux, or any server you can SSH into:
+
+```bash
+tmux new -s codex-worker
+npm run worker:daemon
+# Ctrl+B, D to detach
+
+tmux new -s slack-bot
+npm run worker:slack
+# Ctrl+B, D to detach
+```
+
+Reattach later: `tmux attach -t codex-worker`
 
 ---
 
@@ -143,133 +186,130 @@ SLACK_APP_TOKEN=xapp-your-token
 
 ---
 
-## Remote demo setup: Tailscale (Mac Mini + MacBook Pro)
+## Remote demo: SSH + Tailscale
 
-This is the setup for running the Codex worker on your Mac Mini while presenting the demo from your MacBook Pro.
+Run the Codex worker on your server (Mac Mini, VPS, or anything) while presenting from your laptop.
 
 ### Why Tailscale?
 
-Tailscale creates a private WireGuard mesh VPN between your devices. No port forwarding, no public IPs, no firewall rules. Both machines get stable IPs on your tailnet (e.g. `100.x.y.z`) that work from anywhere — home, conference Wi-Fi, hotel, tethered phone.
+Tailscale creates a private WireGuard mesh VPN. No port forwarding, no public IPs, no firewall rules. Both machines get stable IPs on your tailnet (e.g. `100.x.y.z`) that work from anywhere — home, conference Wi-Fi, hotel, tethered phone.
 
-### One-time setup
+> **Already have a VPS with a public IP?** You can skip Tailscale entirely and SSH directly. Tailscale is most useful when your server is behind NAT (like a Mac Mini at home) or you want zero-config private networking.
 
-**On both machines (Mac Mini + MacBook Pro):**
+### Install Tailscale
+
+**macOS (Mac Mini or laptop):**
 
 ```bash
-# Install Tailscale
 brew install tailscale
-
-# Start the service
 brew services start tailscale
-
-# Authenticate (opens browser)
 tailscale up
 ```
 
-After both machines are authenticated, verify they can see each other:
+**Linux VPS (Ubuntu/Debian):**
 
 ```bash
-tailscale status
+curl -fsSL https://tailscale.com/install.sh | sh
+sudo systemctl enable --now tailscaled
+sudo tailscale up
 ```
 
-You should see both machines listed with their Tailscale IPs.
-
-**On the Mac Mini — enable SSH:**
-
-1. System Settings > General > Sharing > Remote Login > toggle ON
-2. Make sure your user is in the allowed list
-
-**Test from your MacBook Pro:**
+**Verify connectivity:**
 
 ```bash
-# Use the Tailscale IP or hostname (shown in `tailscale status`)
-ssh rudrank@<mac-mini-tailscale-ip>
-
-# Or use the MagicDNS hostname (usually the machine name)
-ssh rudrank@mac-mini
+tailscale status    # both machines should appear
 ```
 
-### Workshop demo workflow
+### Enable SSH on the server
 
-**Before the session — start services on Mac Mini:**
+**macOS:** System Settings > General > Sharing > Remote Login > ON
+
+**Linux:** SSH is typically already running. If not: `sudo systemctl enable --now ssh`
+
+### Test the connection
 
 ```bash
-# SSH into Mac Mini from MacBook Pro
-ssh rudrank@mac-mini
+# Tailscale MagicDNS hostname (or use the 100.x.y.z IP)
+ssh you@your-server
 
-# Navigate to the workshop repo
-cd ~/codex-sdk-macmini-workshop
+# If using a VPS with public IP, just use that directly
+ssh you@203.0.113.42
+```
 
-# Start the daemon worker (runs in background via launchd or tmux)
+### Demo workflow
+
+**Before the session — start services on the server:**
+
+```bash
+ssh you@your-server
+cd ~/codex-sdk-workshop
+
+# Option 1: tmux (works everywhere)
 tmux new -s codex-worker
 npm run worker:daemon
 # Ctrl+B, D to detach
 
-# Start the Slack bot
 tmux new -s slack-bot
 npm run worker:slack
 # Ctrl+B, D to detach
+
+# Option 2: systemd (Linux) or launchd (macOS) — see service sections above
 ```
 
-**During the live demo — from MacBook Pro:**
+**During the live demo — from your laptop:**
 
 ```bash
-# Run quick demos against the Mac Mini workspace (over SSH)
-ssh rudrank@mac-mini "cd ~/codex-sdk-macmini-workshop && npm run demo:basic"
+# Run demos remotely
+ssh you@your-server "cd ~/codex-sdk-workshop && npm run demo:basic"
+ssh you@your-server "cd ~/codex-sdk-workshop && npm run demo:pr-review -- 42"
+ssh you@your-server "cd ~/codex-sdk-workshop && npm run demo:summarize -- README.md"
 
-# Review a PR on Foundation Models repo
-ssh rudrank@mac-mini "cd ~/codex-sdk-macmini-workshop && npm run demo:pr-review -- 42"
+# Watch daemon logs live
+ssh you@your-server "tail -f ~/codex-sdk-workshop/logs/worker.log"
 
-# Summarize a file from the Foundation Models project
-ssh rudrank@mac-mini "cd ~/codex-sdk-macmini-workshop && npm run demo:summarize -- ~/Developer/Apps/Foundation-Models-Framework-Example/README.md"
-
-# Check daemon logs in real time
-ssh rudrank@mac-mini "tail -f ~/codex-sdk-macmini-workshop/logs/worker.log"
-
-# Reattach to tmux sessions if needed
-ssh rudrank@mac-mini -t "tmux attach -t codex-worker"
+# Reattach to a tmux session
+ssh you@your-server -t "tmux attach -t codex-worker"
 ```
 
-**Slack demo — show it live:**
+**Slack demo — show it live from the audience's perspective:**
 
-1. Open Slack on your MacBook Pro
+1. Open Slack on your laptop
 2. @mention the Codex bot in a channel
-3. Show the audience the message going out, the thinking indicator, and the reply coming back
-4. The bot is running on the Mac Mini via Tailscale — completely headless
+3. Show the message going out, the thinking indicator, and the reply
+4. The bot is running headlessly on your server
+
+### Alternative: VS Code / Cursor Remote SSH
+
+1. Install the "Remote - SSH" extension
+2. Connect to `you@your-server` (Tailscale hostname or public IP)
+3. Open the workshop folder — full IDE experience on the remote machine
+4. Present your editor window to the audience
 
 ### Tips for reliable demos
 
 - **Test the night before**: SSH in, run each demo once, check Slack bot responds
-- **Use tmux**: Keeps processes alive if your SSH session drops
-- **Tailscale is stable on conference Wi-Fi**: It uses DERP relays as fallback if direct connections fail — you'll still connect even on restrictive networks
-- **Have recordings ready**: Record a terminal session of each demo as backup (`asciinema rec` or screen recording)
-- **Keep prompts short**: Use pre-written prompts to minimize latency during live demos
-- **MagicDNS**: Enable it in Tailscale admin console so you can use `ssh rudrank@mac-mini` instead of IP addresses
-
-### Alternative: VS Code Remote SSH
-
-If you prefer a GUI, VS Code Remote SSH works over Tailscale too:
-
-1. Install the "Remote - SSH" extension in VS Code / Cursor
-2. Connect to `rudrank@mac-mini` (Tailscale hostname)
-3. Open the workshop folder — now you're editing and running terminals directly on the Mac Mini
-4. Present your VS Code window to the audience
+- **tmux keeps processes alive**: Even if your SSH session drops
+- **Tailscale on conference Wi-Fi**: Uses DERP relays as fallback if direct connections fail
+- **Have recordings ready**: `asciinema rec` or screen recording as backup
+- **Short prompts**: Pre-written prompts minimize latency during live demos
+- **MagicDNS**: Enable it in Tailscale admin so you can `ssh you@mac-mini` instead of IPs
 
 ---
 
 ## Foundation Models Framework Example
 
-The [Foundation-Models-Framework-Example](https://github.com/rudrankriyam/Foundation-Models-Framework-Example) project is the target workspace for Codex demos. It's an iOS/macOS app built with Apple's Foundation Models framework featuring:
+The [Foundation-Models-Framework-Example](https://github.com/rudrankriyam/Foundation-Models-Framework-Example) project is the default target workspace for Codex demos. It's an iOS/macOS app built with Apple's Foundation Models framework featuring:
 
 - Chat, structured generation, tool calling, RAG, voice, health dashboard
 - A CLI tool (`FoundationLabCLI`) with 12 subcommands
 - Swift Playgrounds for hands-on learning
 
-The PR reviewer and summarize scripts work great against this repo — it's large enough to produce meaningful reviews and small enough for fast Codex turnaround.
+The PR reviewer and summarize scripts work great against this repo — large enough for meaningful reviews, small enough for fast Codex turnaround.
 
 ## Notes for workshop reliability
 
 - Keep daemon defaults safe (`read-only` sandbox + `approval never`) unless you explicitly need edits
 - Keep fallback recordings for each script demo
 - Prefer short prompts during live sessions to avoid latency spikes
-- Test Tailscale connection before going on stage
+- Test your SSH / Tailscale connection before going on stage
+- The Codex SDK is pure Node.js — no macOS-specific dependencies
