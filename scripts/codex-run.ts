@@ -70,7 +70,7 @@ async function main(): Promise<void> {
   const thread = codex.startThread({
     workingDirectory,
     skipGitRepoCheck: false,
-    sandboxMode: "workspace-write",
+    sandboxMode: "danger-full-access",
     approvalPolicy: "never",
     networkAccessEnabled: true,
     webSearchMode: "live",
