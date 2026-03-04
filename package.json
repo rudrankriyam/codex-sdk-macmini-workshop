@@ -11,6 +11,7 @@
     "demo:web-access": "tsx scripts/07-web-access-worker.ts",
     "worker:daemon": "tsx scripts/04-daemon-worker.ts",
     "demo:pr-review": "tsx scripts/05-pr-reviewer.ts",
+    "worker:slack": "tsx scripts/06-slack-coworker.ts",
     "demo:summarize": "tsx scripts/summarize-file.ts",
     "typecheck": "tsc --noEmit",
     "workshop:check": "bash scripts/workshop-check.sh",
@@ -27,6 +28,7 @@
   "type": "module",
   "dependencies": {
     "@openai/codex-sdk": "^0.107.0",
+    "@slack/bolt": "^4.6.0",
     "dotenv": "^17.3.1"
   },
   "devDependencies": {
