@@ -2,7 +2,7 @@ import { argv } from "node:process";
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-import { createCodexClient, ensureRuntimeDirs, paths, timestamp, trimForLog } from "./helpers.js";
+import { createCodexClient, ensureRuntimeDirs, paths, timestamp } from "./helpers.js";
 import { Codex, type ThreadItem } from "@openai/codex-sdk";
 
 const DEFAULT_INSTRUCTIONS_FILE = "pr-review-instructions.md";
@@ -11,9 +11,9 @@ const LAST_THREAD_FILE = `${paths.stateDir}/codex-run-thread-id.txt`;
 function formatItemSummary(item: ThreadItem): string | null {
   switch (item.type) {
     case "reasoning":
-      return `Reasoning: ${trimForLog(item.text, 180)}`;
+      return `Reasoning: ${item.text}`;
     case "agent_message":
-      return `Assistant: ${trimForLog(item.text, 200)}`;
+      return `Assistant: ${item.text}`;
     case "command_execution":
       return `Command: ${item.command} (${item.status}, exit ${item.exit_code ?? "?"})`;
     case "file_change":
@@ -21,7 +21,7 @@ function formatItemSummary(item: ThreadItem): string | null {
     case "web_search":
       return `Web search: ${item.query}`;
     case "mcp_tool_call":
-      return `MCP [${item.server}] ${item.tool}(${typeof item.arguments === "string" ? trimForLog(item.arguments, 120) : trimForLog(JSON.stringify(item.arguments), 120)}) — ${item.status}${item.error ? ` error: ${item.error.message}` : ""}`;
+      return `MCP [${item.server}] ${item.tool}(${typeof item.arguments === "string" ? item.arguments : JSON.stringify(item.arguments)}) — ${item.status}${item.error ? ` error: ${item.error.message}` : ""}`;
     case "todo_list":
       return `Todo: ${item.items.filter((t) => !t.completed).length} open`;
     default:
