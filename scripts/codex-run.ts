@@ -77,15 +77,21 @@ async function main(): Promise<void> {
   const workingDirectory = path.resolve(extractFlag(args, "--cwd") ?? process.cwd());
   const resumeFlag = extractBoolFlag(args, "--resume");
   const resumeId = extractFlag(args, "--thread");
+  const dangerFullAccess = extractBoolFlag(args, "--danger-full-access");
+  const network = extractBoolFlag(args, "--network");
+  const webSearch = extractBoolFlag(args, "--web-search");
 
   const prompt = args.join(" ").trim();
   if (!prompt) {
-    console.error("Usage: npm run codex -- [--cwd /path] [--resume | --thread <id>] <prompt>");
+    console.error("Usage: npm run codex -- [--cwd /path] [--resume | --thread <id>] [--danger-full-access] [--network] [--web-search] <prompt>");
     console.error("");
     console.error("Flags:");
     console.error("  --cwd <path>     Working directory for Codex (default: cwd)");
     console.error("  --resume         Continue the last thread automatically");
     console.error("  --thread <id>    Resume a specific thread by ID");
+    console.error("  --danger-full-access   Override sandbox mode to danger-full-access");
+    console.error("  --network              Override networkAccessEnabled=true");
+    console.error('  --web-search           Override web search mode to "live" and enable web search');
     console.error("");
     console.error("Examples:");
     console.error('  npm run codex -- --cwd ~/my-repo "Build this project"');
@@ -107,11 +113,9 @@ async function main(): Promise<void> {
   const threadOptions = defaultThreadOptions({
     workingDirectory,
     skipGitRepoCheck: false,
-    sandboxMode: "danger-full-access",
-    approvalPolicy: "never",
-    networkAccessEnabled: true,
-    webSearchMode: "live",
-    webSearchEnabled: true,
+    ...(dangerFullAccess ? { sandboxMode: "danger-full-access" as const } : {}),
+    ...(network ? { networkAccessEnabled: true } : {}),
+    ...(webSearch ? { webSearchMode: "live" as const, webSearchEnabled: true, networkAccessEnabled: true } : {}),
   });
 
   let threadId = resumeId ?? (resumeFlag ? await loadLastThreadId() : null);
