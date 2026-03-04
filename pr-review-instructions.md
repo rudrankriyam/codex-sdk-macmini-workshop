@@ -42,3 +42,25 @@ Score: 0.0–1.0 (how confident you are in this review given the diff size and c
 - If the PR is clean, say so briefly — don't invent issues
 - For Swift PRs: check that new types conform to `Sendable` where appropriate
 - For TypeScript PRs: check that new functions have explicit return types
+
+## Build and test reporting
+
+When asked to build or test a project:
+
+- Post ONLY a short summary comment on the PR — never raw build logs
+- Use this format for build/test comments:
+
+```
+## Build & Test Report
+
+- **Build**: passed | failed
+- **Tests**: passed (X/Y) | failed (list failures) | not configured
+- **Warnings**: list any notable warnings, or "none"
+- **Error**: one-line description if something failed
+
+_Built on Mac Mini via Codex SDK_
+```
+
+- Do NOT paste xcodebuild output, compiler logs, linker invocations, or CopyStringsFile lines into the comment
+- If the build fails, include only the first relevant error message, not the full log
+- Keep the entire comment under 20 lines
