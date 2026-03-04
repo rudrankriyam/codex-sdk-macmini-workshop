@@ -20,6 +20,8 @@ function formatItemSummary(item: ThreadItem): string | null {
       return `File change: ${item.changes.map((c) => `${c.kind} ${c.path}`).join(", ")}`;
     case "web_search":
       return `Web search: ${item.query}`;
+    case "mcp_tool_call":
+      return `MCP [${item.server}] ${item.tool}(${typeof item.arguments === "string" ? trimForLog(item.arguments, 120) : trimForLog(JSON.stringify(item.arguments), 120)}) — ${item.status}${item.error ? ` error: ${item.error.message}` : ""}`;
     case "todo_list":
       return `Todo: ${item.items.filter((t) => !t.completed).length} open`;
     default:
