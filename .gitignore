@@ -3,6 +3,7 @@ dist/
 .env
 *.log
 state/thread-id.txt
+state/pr-review-poller-state.json
 state/*.tmp
 logs/*.log
 logs/*.out

@@ -39,7 +39,6 @@ Score: 0.0–1.0 (how confident you are in this review given the diff size and c
 
 - Be direct, not diplomatic. "This will crash" not "You might want to consider..."
 - Always include file and line references
-- Keep the review under 800 words
 - If the PR is clean, say so briefly — don't invent issues
 - For Swift PRs: check that new types conform to `Sendable` where appropriate
 - For TypeScript PRs: check that new functions have explicit return types

@@ -12,6 +12,7 @@ Build an always-on AI engineering co-worker with the Codex SDK. Runs on a Mac Mi
 | `07-web-access-worker.ts` | Live web-search-enabled run with streamed events |
 | `04-daemon-worker.ts` | Always-on loop for headless service mode |
 | `05-pr-reviewer.ts` | Streaming PR review — posts a comment via `gh` |
+| `08-pr-review-poller.ts` | Polling worker that auto-reviews open PRs continuously |
 | `06-slack-coworker.ts` | Slack bot (Socket Mode) — @mention to run Codex |
 | `summarize-file.ts` | Summarize any file with size-guarded prompt |
 | `launchd/` | macOS `launchd` plist template |
@@ -72,6 +73,41 @@ Reviews a pull request and posts a comment via `gh`:
 npm run demo:pr-review -- 42                                  # default repo
 npm run demo:pr-review -- rudrankriyam/some-other-repo 7      # override repo
 ```
+
+### PR poller worker (always-on auto review)
+
+Runs continuously and calls `demo:pr-review` for open PRs.
+
+```bash
+# Auto mode: review a PR when it changes
+npm run worker:pr-poller
+```
+
+`auto` mode is the easiest workshop story: your Mac Mini checks open PRs every few minutes and posts updated reviews automatically.
+
+For a one-cycle dry run during workshop prep:
+
+```bash
+PR_POLL_RUN_ONCE=true npm run worker:pr-poller
+```
+
+#### Trigger mode (`@codex-review`)
+
+If you want manual control, switch to trigger mode in `.env`:
+
+```bash
+PR_POLL_MODE=trigger
+PR_POLL_TRIGGER_PHRASE=@codex-review
+```
+
+Now the poller only reviews a PR when a new issue comment contains `@codex-review`.
+
+```bash
+npm run worker:pr-poller
+```
+
+State is persisted in `state/pr-review-poller-state.json` so the worker avoids duplicate reviews.
+Logs stream to `logs/pr-review-poller.log`.
 
 ### Web access demo
 

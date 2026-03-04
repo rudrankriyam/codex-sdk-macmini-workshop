@@ -11,6 +11,7 @@
     "demo:web-access": "tsx scripts/07-web-access-worker.ts",
     "worker:daemon": "tsx scripts/04-daemon-worker.ts",
     "demo:pr-review": "tsx scripts/05-pr-reviewer.ts",
+    "worker:pr-poller": "tsx scripts/08-pr-review-poller.ts",
     "worker:slack": "tsx scripts/06-slack-coworker.ts",
     "demo:summarize": "tsx scripts/summarize-file.ts",
     "typecheck": "tsc --noEmit",
