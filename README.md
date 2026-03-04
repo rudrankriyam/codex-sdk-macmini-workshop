@@ -12,7 +12,6 @@ Build an always-on AI engineering co-worker with the Codex SDK. Runs on a Mac Mi
 | `07-web-access-worker.ts` | Live web-search-enabled run with streamed events |
 | `04-daemon-worker.ts` | Always-on loop for headless service mode |
 | `05-pr-reviewer.ts` | Streaming PR review — posts a comment via `gh` |
-| `06-slack-coworker.ts` | Slack bot (Socket Mode) — @mention to run Codex |
 | `summarize-file.ts` | Summarize any file with size-guarded prompt |
 | `launchd/` | macOS `launchd` plist template |
 | `systemd/` | Linux `systemd` unit file template |
@@ -81,16 +80,6 @@ Runs with thread-level overrides (`networkAccessEnabled=true`, `webSearchMode=li
 npm run demo:web-access
 npm run demo:web-access -- "Find the latest Xcode release notes and summarize the top 3 changes with source links."
 ```
-
-### Slack coworker
-
-A Socket Mode bot that responds to @mentions and DMs:
-
-```bash
-npm run worker:slack
-```
-
-See [Slack App setup](#slack-app-setup) below for configuration.
 
 ## Workshop preflight
 
@@ -161,39 +150,9 @@ Works on macOS, Linux, or any server you can SSH into:
 tmux new -s codex-worker
 npm run worker:daemon
 # Ctrl+B, D to detach
-
-tmux new -s slack-bot
-npm run worker:slack
-# Ctrl+B, D to detach
 ```
 
 Reattach later: `tmux attach -t codex-worker`
-
----
-
-## Slack App setup
-
-1. Go to [api.slack.com/apps](https://api.slack.com/apps) and create a new app **From scratch**
-2. Under **Socket Mode**, enable it and generate an **App-Level Token** with `connections:write` scope — this is your `SLACK_APP_TOKEN` (starts with `xapp-`)
-3. Under **OAuth & Permissions**, add these **Bot Token Scopes**:
-   - `app_mentions:read`
-   - `chat:write`
-   - `im:history`
-   - `im:read`
-   - `im:write`
-4. Install the app to your workspace — copy the **Bot User OAuth Token** as `SLACK_BOT_TOKEN` (starts with `xoxb-`)
-5. Under **Event Subscriptions**, enable events and subscribe to:
-   - `app_mention`
-   - `message.im`
-6. Add both tokens to your `.env`:
-
-```bash
-SLACK_BOT_TOKEN=xoxb-your-token
-SLACK_APP_TOKEN=xapp-your-token
-```
-
-7. Run: `npm run worker:slack`
-8. @mention the bot in any channel it's been invited to, or DM it directly
 
 ---
 
@@ -315,7 +274,6 @@ ssh-copy-id my-vps    # if using a VPS too
 npm run demo:basic
 npm run demo:pr-review -- 42
 npm run demo:summarize -- README.md
-npm run worker:slack
 ```
 
 Everything the audience sees — file tree, editor, terminal output — is your MacBook Pro screen, but the code and processes run on the Mac Mini / VPS.
@@ -357,10 +315,9 @@ You can also use the Tailscale IP (`vnc://100.x.y.z`) or MagicDNS hostname (`vnc
 | Xcode building the Foundation Lab project | Screen Sharing |
 | iOS Simulator launching and running the app | Screen Sharing |
 | XcodeBuildMCP triggering builds/tests | Screen Sharing |
-| Slack bot responding to messages | Slack on your MacBook Pro |
 | PR review comment appearing on GitHub | Browser on your MacBook Pro |
 
-During the workshop, you switch windows on your MacBook Pro — Cursor for code, Screen Sharing for Xcode/Simulator, Slack for the bot demo, browser for GitHub.
+During the workshop, you switch windows on your MacBook Pro — Cursor for code, Screen Sharing for Xcode/Simulator, browser for GitHub.
 
 ### Demo workflow for a remote workshop
 
@@ -375,7 +332,6 @@ cd ~/codex-sdk-workshop
 
 # Start long-running services in tmux
 tmux new -s codex-worker -d "npm run worker:daemon"
-tmux new -s slack-bot -d "npm run worker:slack"
 
 # Verify they're running
 tmux ls
@@ -387,25 +343,22 @@ tmux ls
 
 2. **Xcode + Simulator demos** — Switch to the Screen Sharing window. The audience sees the Mac Mini's desktop — Xcode building, Simulator launching, the Foundation Lab app running. Trigger builds via XcodeBuildMCP or the Xcode GUI on the Mac Mini.
 
-3. **Slack demo** — Switch to Slack (on your MacBook Pro). @mention the Codex bot. The audience watches the message appear, the typing indicator, and the AI response — all in real time. The bot is running on your Mac Mini.
+3. **PR review demo** — Open a GitHub PR in your browser. Run `npm run demo:pr-review -- 42` in the remote terminal. Switch to the browser and refresh — the review comment appears.
 
-4. **PR review demo** — Open a GitHub PR in your browser. Run `npm run demo:pr-review -- 42` in the remote terminal. Switch to the browser and refresh — the review comment appears.
-
-5. **Daemon worker** — Show `tail -f logs/worker.log` in a terminal. Explain that this runs 24/7 on the Mac Mini, doing periodic check-ins. Scroll through past entries.
+4. **Daemon worker** — Show `tail -f logs/worker.log` in a terminal. Explain that this runs 24/7 on the Mac Mini, doing periodic check-ins. Scroll through past entries.
 
 **If something breaks during the demo:**
 
 - Have pre-recorded terminal sessions ready (`asciinema` or screen recordings)
 - Have screenshot/paste of expected output for each demo
-- The Slack bot is the most resilient demo — it works regardless of your SSH connection
 
 ### Tips for reliable remote workshops
 
 - **Wired ethernet on the Mac Mini** if possible — more stable than Wi-Fi for the server
-- **Test the full flow the night before**: SSH in, run each demo, check Slack bot, verify `gh` auth
+- **Test the full flow the night before**: SSH in, run each demo, verify `gh` auth
 - **Pre-written prompts**: Copy-paste from a notes file instead of typing live
 - **Keep your MacBook Pro plugged in**: Long workshops drain battery fast with screen sharing
-- **Close unnecessary apps**: Screen sharing + Cursor + Slack + browser is already a lot
+- **Close unnecessary apps**: Screen sharing + Cursor + browser is already a lot
 - **Have a backup plan**: If SSH dies, switch to pre-recorded demos and narrate over them
 
 ---
