@@ -14,6 +14,7 @@
     "worker:pr-poller": "tsx scripts/08-pr-review-poller.ts",
     "worker:slack": "tsx scripts/06-slack-coworker.ts",
     "demo:summarize": "tsx scripts/summarize-file.ts",
+    "codex": "tsx scripts/codex-run.ts",
     "typecheck": "tsc --noEmit",
     "workshop:check": "bash scripts/workshop-check.sh",
     "workshop:check:demos": "bash scripts/workshop-check.sh --with-demos"
