@@ -186,113 +186,173 @@ SLACK_APP_TOKEN=xapp-your-token
 
 ---
 
-## Remote demo: SSH + Tailscale
+## Remote demo setup
 
-Run the Codex worker on your server (Mac Mini, VPS, or anything) while presenting from your laptop.
+You're presenting from your MacBook Pro (screen-shared over a video call). The Codex worker runs on a separate machine — a Mac Mini on your desk, a Linux VPS, or both. The audience sees your MacBook Pro screen.
 
-### Why Tailscale?
+### Your options
 
-Tailscale creates a private WireGuard mesh VPN. No port forwarding, no public IPs, no firewall rules. Both machines get stable IPs on your tailnet (e.g. `100.x.y.z`) that work from anywhere — home, conference Wi-Fi, hotel, tethered phone.
+| Setup | How it works | Best for |
+|-------|-------------|----------|
+| **Same-network SSH** | Both machines on your home Wi-Fi — just SSH by local IP | Simplest, zero extra tools |
+| **Tailscale** | Private WireGuard VPN — stable IPs even across networks | Mac Mini behind NAT, or if you also want to reach a VPS |
+| **Direct SSH to VPS** | Public IP, standard SSH | Cloud server with a public IP |
+| **Cursor Remote SSH** | Full IDE on the remote machine, presented locally | Best visual experience for a workshop audience |
 
-> **Already have a VPS with a public IP?** You can skip Tailscale entirely and SSH directly. Tailscale is most useful when your server is behind NAT (like a Mac Mini at home) or you want zero-config private networking.
+### Option 1: Same-network SSH (Mac Mini on your desk)
 
-### Install Tailscale
+Your MacBook Pro and Mac Mini are both on your home Wi-Fi. Find the Mac Mini's local IP and SSH in.
 
-**macOS (Mac Mini or laptop):**
+**On the Mac Mini — one-time setup:**
+
+1. System Settings > General > Sharing > Remote Login > ON
+2. Note the IP address (System Settings > Wi-Fi > Details > IP Address), e.g. `192.168.1.50`
+
+**From your MacBook Pro:**
 
 ```bash
+ssh rudrank@192.168.1.50
+```
+
+To avoid typing the IP every time, add it to `~/.ssh/config` on your MacBook Pro:
+
+```
+Host mac-mini
+  HostName 192.168.1.50
+  User rudrank
+```
+
+Now you can just `ssh mac-mini`.
+
+### Option 2: Tailscale (any network topology)
+
+Tailscale creates a private WireGuard mesh VPN. Both machines get stable `100.x.y.z` IPs that work regardless of network — useful if you ever demo from a different location, or want to reach both a local Mac Mini and a remote VPS.
+
+**Install on both machines:**
+
+```bash
+# macOS
 brew install tailscale
 brew services start tailscale
 tailscale up
-```
 
-**Linux VPS (Ubuntu/Debian):**
-
-```bash
+# Linux VPS
 curl -fsSL https://tailscale.com/install.sh | sh
 sudo systemctl enable --now tailscaled
 sudo tailscale up
 ```
 
-**Verify connectivity:**
+**Verify:**
 
 ```bash
-tailscale status    # both machines should appear
+tailscale status    # both machines listed with IPs
 ```
 
-### Enable SSH on the server
+**Enable MagicDNS** in the [Tailscale admin console](https://login.tailscale.com/admin/dns) so you can use hostnames like `mac-mini` instead of IPs.
 
-**macOS:** System Settings > General > Sharing > Remote Login > ON
-
-**Linux:** SSH is typically already running. If not: `sudo systemctl enable --now ssh`
-
-### Test the connection
+**SSH in:**
 
 ```bash
-# Tailscale MagicDNS hostname (or use the 100.x.y.z IP)
-ssh you@your-server
-
-# If using a VPS with public IP, just use that directly
-ssh you@203.0.113.42
+ssh rudrank@mac-mini        # Tailscale MagicDNS
+ssh rudrank@100.64.0.2      # or use the Tailscale IP
 ```
 
-### Demo workflow
+### Option 3: Cursor Remote SSH (recommended for live demos)
 
-**Before the session — start services on the server:**
+This gives you a full Cursor IDE running on the remote machine, displayed on your MacBook Pro. The audience sees a normal editor — they don't need to know it's remote. Terminals, file explorer, extensions, and AI features all work as if the project were local.
+
+**One-time setup:**
+
+1. Open Cursor on your MacBook Pro
+2. Install the **Remote - SSH** extension (if not already installed):
+   - `Cmd+Shift+X` > search "Remote - SSH" > Install
+3. Add the remote host to your SSH config (`~/.ssh/config` on your MacBook Pro):
+
+```
+Host mac-mini
+  HostName 192.168.1.50
+  User rudrank
+
+Host my-vps
+  HostName 203.0.113.42
+  User deploy
+```
+
+(Use Tailscale hostnames/IPs if you went with Option 2.)
+
+4. Set up SSH key auth so you don't need to type a password during the demo:
 
 ```bash
-ssh you@your-server
+# Generate a key if you don't have one
+ssh-keygen -t ed25519
+
+# Copy it to the remote machine
+ssh-copy-id mac-mini
+ssh-copy-id my-vps    # if using a VPS too
+```
+
+**Connecting during the workshop:**
+
+1. `Cmd+Shift+P` > **Remote-SSH: Connect to Host...** > pick `mac-mini` (or `my-vps`)
+2. Cursor opens a new window connected to the remote machine
+3. **File > Open Folder** > `~/codex-sdk-workshop`
+4. Open the integrated terminal (`Ctrl+Backtick`) — this terminal runs on the remote machine
+5. Run demos directly:
+
+```bash
+npm run demo:basic
+npm run demo:pr-review -- 42
+npm run demo:summarize -- README.md
+npm run worker:slack
+```
+
+Everything the audience sees — file tree, editor, terminal output — is your MacBook Pro screen, but the code and processes run on the Mac Mini / VPS.
+
+**Pro tip:** Open a split terminal. Run the demo command in one pane and `tail -f logs/worker.log` in the other. The audience sees both side by side.
+
+### Demo workflow for a remote workshop
+
+You're on a video call (Zoom, Meet, etc.), screen-sharing your MacBook Pro.
+
+**30 minutes before the call:**
+
+```bash
+# SSH into your server (Mac Mini or VPS)
+ssh mac-mini
 cd ~/codex-sdk-workshop
 
-# Option 1: tmux (works everywhere)
-tmux new -s codex-worker
-npm run worker:daemon
-# Ctrl+B, D to detach
+# Start long-running services in tmux
+tmux new -s codex-worker -d "npm run worker:daemon"
+tmux new -s slack-bot -d "npm run worker:slack"
 
-tmux new -s slack-bot
-npm run worker:slack
-# Ctrl+B, D to detach
-
-# Option 2: systemd (Linux) or launchd (macOS) — see service sections above
+# Verify they're running
+tmux ls
 ```
 
-**During the live demo — from your laptop:**
+**During the call — what the audience sees:**
 
-```bash
-# Run demos remotely
-ssh you@your-server "cd ~/codex-sdk-workshop && npm run demo:basic"
-ssh you@your-server "cd ~/codex-sdk-workshop && npm run demo:pr-review -- 42"
-ssh you@your-server "cd ~/codex-sdk-workshop && npm run demo:summarize -- README.md"
+1. **Terminal demos** — Open Cursor Remote SSH to the Mac Mini (or a regular terminal SSH session). Run scripts live. The audience sees your terminal output in real time.
 
-# Watch daemon logs live
-ssh you@your-server "tail -f ~/codex-sdk-workshop/logs/worker.log"
+2. **Slack demo** — Switch to Slack (on your MacBook Pro). @mention the Codex bot. The audience watches the message appear, the typing indicator, and the AI response — all in real time. The bot is running on your Mac Mini.
 
-# Reattach to a tmux session
-ssh you@your-server -t "tmux attach -t codex-worker"
-```
+3. **PR review demo** — Open a GitHub PR in your browser. Run `npm run demo:pr-review -- 42` in the remote terminal. Switch to the browser and refresh — the review comment appears.
 
-**Slack demo — show it live from the audience's perspective:**
+4. **Daemon worker** — Show `tail -f logs/worker.log` in a terminal. Explain that this runs 24/7 on the Mac Mini, doing periodic check-ins. Scroll through past entries.
 
-1. Open Slack on your laptop
-2. @mention the Codex bot in a channel
-3. Show the message going out, the thinking indicator, and the reply
-4. The bot is running headlessly on your server
+**If something breaks during the demo:**
 
-### Alternative: VS Code / Cursor Remote SSH
+- Have pre-recorded terminal sessions ready (`asciinema` or screen recordings)
+- Have screenshot/paste of expected output for each demo
+- The Slack bot is the most resilient demo — it works regardless of your SSH connection
 
-1. Install the "Remote - SSH" extension
-2. Connect to `you@your-server` (Tailscale hostname or public IP)
-3. Open the workshop folder — full IDE experience on the remote machine
-4. Present your editor window to the audience
+### Tips for reliable remote workshops
 
-### Tips for reliable demos
-
-- **Test the night before**: SSH in, run each demo once, check Slack bot responds
-- **tmux keeps processes alive**: Even if your SSH session drops
-- **Tailscale on conference Wi-Fi**: Uses DERP relays as fallback if direct connections fail
-- **Have recordings ready**: `asciinema rec` or screen recording as backup
-- **Short prompts**: Pre-written prompts minimize latency during live demos
-- **MagicDNS**: Enable it in Tailscale admin so you can `ssh you@mac-mini` instead of IPs
+- **Wired ethernet on the Mac Mini** if possible — more stable than Wi-Fi for the server
+- **Test the full flow the night before**: SSH in, run each demo, check Slack bot, verify `gh` auth
+- **Pre-written prompts**: Copy-paste from a notes file instead of typing live
+- **Keep your MacBook Pro plugged in**: Long workshops drain battery fast with screen sharing
+- **Close unnecessary apps**: Screen sharing + Cursor + Slack + browser is already a lot
+- **Have a backup plan**: If SSH dies, switch to pre-recorded demos and narrate over them
 
 ---
 
