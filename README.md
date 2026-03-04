@@ -197,7 +197,8 @@ You're presenting from your MacBook Pro (screen-shared over a video call). The C
 | **Same-network SSH** | Both machines on your home Wi-Fi — just SSH by local IP | Simplest, zero extra tools |
 | **Tailscale** | Private WireGuard VPN — stable IPs even across networks | Mac Mini behind NAT, or if you also want to reach a VPS |
 | **Direct SSH to VPS** | Public IP, standard SSH | Cloud server with a public IP |
-| **Cursor Remote SSH** | Full IDE on the remote machine, presented locally | Best visual experience for a workshop audience |
+| **Cursor Remote SSH** | Full IDE on the remote machine, presented locally | Best visual experience for code + terminal demos |
+| **Apple Screen Sharing** | Stream the full Mac Mini desktop (Xcode, Simulator, etc.) | Showing GUI apps like Xcode building or Simulator running |
 
 ### Option 1: Same-network SSH (Mac Mini on your desk)
 
@@ -310,6 +311,46 @@ Everything the audience sees — file tree, editor, terminal output — is your 
 
 **Pro tip:** Open a split terminal. Run the demo command in one pane and `tail -f logs/worker.log` in the other. The audience sees both side by side.
 
+### Option 4: Apple Screen Sharing (show Xcode + Simulator)
+
+When you need the audience to see the Mac Mini's full desktop — Xcode building, Simulator launching, the Foundation Lab app running — use the built-in Screen Sharing.
+
+**On the Mac Mini — one-time setup:**
+
+1. System Settings > General > Sharing > **Screen Sharing** > ON
+2. Make sure your user account is in the allowed list
+
+**From your MacBook Pro:**
+
+```bash
+# Connect via Finder
+# Go > Connect to Server > vnc://192.168.1.50
+
+# Or open Screen Sharing.app directly
+open /System/Library/CoreServices/Applications/Screen\ Sharing.app
+```
+
+You can also use the Tailscale IP (`vnc://100.x.y.z`) or MagicDNS hostname (`vnc://mac-mini`).
+
+**Display tips for the workshop:**
+
+- **View > Fit to Window** — scales the Mac Mini desktop to fit your MacBook Pro window
+- **View > Show Toolbar** — gives you clipboard sharing between machines
+- Resize the Screen Sharing window to roughly match your screen-share resolution so the audience gets a crisp image
+
+**When to show Screen Sharing vs Cursor:**
+
+| Showing | Use |
+|---------|-----|
+| Running Codex scripts, editing code, reading terminal output | Cursor Remote SSH |
+| Xcode building the Foundation Lab project | Screen Sharing |
+| iOS Simulator launching and running the app | Screen Sharing |
+| XcodeBuildMCP triggering builds/tests | Screen Sharing |
+| Slack bot responding to messages | Slack on your MacBook Pro |
+| PR review comment appearing on GitHub | Browser on your MacBook Pro |
+
+During the workshop, you switch windows on your MacBook Pro — Cursor for code, Screen Sharing for Xcode/Simulator, Slack for the bot demo, browser for GitHub.
+
 ### Demo workflow for a remote workshop
 
 You're on a video call (Zoom, Meet, etc.), screen-sharing your MacBook Pro.
@@ -333,11 +374,13 @@ tmux ls
 
 1. **Terminal demos** — Open Cursor Remote SSH to the Mac Mini (or a regular terminal SSH session). Run scripts live. The audience sees your terminal output in real time.
 
-2. **Slack demo** — Switch to Slack (on your MacBook Pro). @mention the Codex bot. The audience watches the message appear, the typing indicator, and the AI response — all in real time. The bot is running on your Mac Mini.
+2. **Xcode + Simulator demos** — Switch to the Screen Sharing window. The audience sees the Mac Mini's desktop — Xcode building, Simulator launching, the Foundation Lab app running. Trigger builds via XcodeBuildMCP or the Xcode GUI on the Mac Mini.
 
-3. **PR review demo** — Open a GitHub PR in your browser. Run `npm run demo:pr-review -- 42` in the remote terminal. Switch to the browser and refresh — the review comment appears.
+3. **Slack demo** — Switch to Slack (on your MacBook Pro). @mention the Codex bot. The audience watches the message appear, the typing indicator, and the AI response — all in real time. The bot is running on your Mac Mini.
 
-4. **Daemon worker** — Show `tail -f logs/worker.log` in a terminal. Explain that this runs 24/7 on the Mac Mini, doing periodic check-ins. Scroll through past entries.
+4. **PR review demo** — Open a GitHub PR in your browser. Run `npm run demo:pr-review -- 42` in the remote terminal. Switch to the browser and refresh — the review comment appears.
+
+5. **Daemon worker** — Show `tail -f logs/worker.log` in a terminal. Explain that this runs 24/7 on the Mac Mini, doing periodic check-ins. Scroll through past entries.
 
 **If something breaks during the demo:**
 
