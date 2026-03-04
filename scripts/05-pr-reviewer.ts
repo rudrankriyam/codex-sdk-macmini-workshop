@@ -60,9 +60,7 @@ function createReviewClient(instructions: string | null): Codex {
     apiKey: process.env.CODEX_API_KEY,
     baseUrl: process.env.OPENAI_BASE_URL,
     config: {
-      ...(process.env.CODEX_SHOW_RAW_AGENT_REASONING === "true"
-        ? { show_raw_agent_reasoning: true }
-        : {}),
+      show_raw_agent_reasoning: true,
       developer_instructions: instructions,
     },
   });

@@ -41,7 +41,6 @@ function collectReasoning(items: ThreadItem[]): string[] {
 
 async function main(): Promise<void> {
   const prompt = argv.slice(2).join(" ").trim() || defaultPrompt;
-  const rawReasoningEnabled = process.env.CODEX_SHOW_RAW_AGENT_REASONING === "true";
 
   const codex = createCodexClient();
   const thread = codex.startThread(defaultThreadOptions());
@@ -78,11 +77,7 @@ async function main(): Promise<void> {
       console.log(`${index + 1}. ${step}`);
     });
   } else {
-    console.log(
-      rawReasoningEnabled
-        ? "\nReasoning: (none returned for this run)"
-        : "\nReasoning: (disabled by default; set CODEX_SHOW_RAW_AGENT_REASONING=true to request it)",
-    );
+    console.log("\nReasoning: (none returned for this run)");
   }
 }
 
